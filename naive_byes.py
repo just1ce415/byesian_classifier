@@ -62,11 +62,11 @@ class BayesianClassifier:
                 bag_of_words.pop(i)
                 continue
             # Stemming
-            bag_of_words[i] = self.__transform_to_infinitive(bag_of_words[i])
+            bag_of_words[i] = self.__stem_word(bag_of_words[i])
             i += 1
         return bag_of_words
 
-    def __transform_to_infinitive(self, word: str) -> str:
+    def __stem_word(self, word: str) -> str:
         """
         Returns a word casted to infinitive (stemmed).
         """
