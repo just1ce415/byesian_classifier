@@ -3,6 +3,7 @@ A Bayesian classier lib.
 """
 from nltk.stem import PorterStemmer
 import re
+import pandas as pd
 
 class BayesianClassifier:
     """
@@ -21,6 +22,8 @@ class BayesianClassifier:
         """
         self.dictionary = None
         self.pstemmer = PorterStemmer()
+        self.num_of_trues = 0
+        self.num_of_fakes = 0
 
     def process_data(self, data_file):
         """
@@ -77,8 +80,24 @@ class BayesianClassifier:
         Creates train dictionary.
         :param train_messages: a DF/list obtained via process_data
         :return: None
+        self.dictionary = {
+            word: [num_true, num_false]
+        }
         """
-        pass
+        self.dictionary = dict()
+        df = train_messages
+
+        for sentence, label in df.itertuples(index=False):
+            for word in sentence.split():
+                if word not in self.dictionary:
+                    self.dictionary[word] = [0, 0]
+
+                if label:
+                    self.dictionary[word][0] += 1
+                    self.num_of_trues += 1
+                else:
+                    self.dictionary[word][1] += 1
+                    self.num_of_fakes += 1
 
     def predict_prob(self, message, label):
         """
@@ -87,7 +106,24 @@ class BayesianClassifier:
         :param label: str - label
         :return: float - probability P(label|message)
         """
-        pass
+        words = message.split()
+        sentence_true_prob, sentence_false_prob = 1, 1
+        for word in words:
+
+            if word in self.dictionary:
+                sentence_true_prob *= (self.dictionary[word][0] + 1) / (
+                    self.num_of_trues + len(self.dictionary))
+
+                sentence_false_prob *= (self.dictionary[word][1] + 1) / (
+                    self.num_of_fakes + len(self.dictionary))
+
+            # If word isn't in dictionary then add it to dictionary.
+            else:
+                self.dictionary[word] = [1, 1]
+
+        if label:
+            return sentence_true_prob
+        return sentence_false_prob
 
     def predict(self, message):
         """
@@ -95,7 +131,9 @@ class BayesianClassifier:
         :param message: str - message
         :return: str - label that is most likely to be truly assigned to a given message
         """
-        pass
+        if self.predict_prob(message, True) >= self.predict_prob(message, False):
+            return True
+        return False
 
     def score(self, test_messages):
         """
